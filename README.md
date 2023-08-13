@@ -13,3 +13,5 @@ blend spaces, and creating custom blueprints from C++.
 
 If you want to follow the progress week by week you can take a look at the following twitter thread: 
 https://twitter.com/bDevGames93/status/1685200083187326976
+
+*The code will be updated week by week as well
