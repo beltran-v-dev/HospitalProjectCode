@@ -10,3 +10,6 @@ My tasks: In this project, I am also taking on the project manager role, althoug
 demanding due to the number of members involved. As a programmer, I am writing
 most of the logic in C++ (character movement, shooting system, AI...), animations with
 blend spaces, and creating custom blueprints from C++.
+
+If you want to follow the progress week by week you can take a look at the following twitter thread: 
+https://twitter.com/bDevGames93/status/1685200083187326976
