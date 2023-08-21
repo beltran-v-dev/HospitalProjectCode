@@ -25,6 +25,11 @@ protected:
 
 	void EnableFire();
 
+	//Line trace for item under the crosshairs
+	bool TraceUnderCorsshairs(FHitResult& OutHitResult);
+
+	//Trave for items if OverlappedItemCound > 0
+	void TraceForItems();
 
 
 	/**
@@ -179,6 +184,16 @@ private:
 	//Variable to check if our player has shooted or not to controll the corsshair shooting movement
 	bool bFiringBullet;
 
+	//True if we should trace every frame for item
+	bool bShouldTraceForItems;
+
+	//Number of overlapped AItems
+	int8 OverlappedItemCount;
+
+	//The AItem we hit last frame
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Items, meta = (AllowPrivateAccess = "true"))
+	class AItem* TraceHitItemLastFrame;
+
 
 
 public:
@@ -205,6 +220,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetCrosshairSpreadMultiplier();
 
+	FORCEINLINE int8 GetOverlapappedItemCound()
+	{
+		return OverlappedItemCount;
+	}
 
-
+	//Add/subtract to/from overlappedItemCount and updates bShouldTraceFromItems
+	void IncrementOverlappedItemCount(int8 Amount);
 };
