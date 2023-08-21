@@ -10,6 +10,8 @@
 #include "Sound/SoundCue.h"
 #include "Engine/SkeletalMeshSocket.h" 
 #include "DrawDebugHelpers.h"
+#include "Item.h"
+#include "Components/WidgetComponent.h"
 
 
 
@@ -82,6 +84,9 @@ ASurvivalCharacter::ASurvivalCharacter()
 	CrosshairAimFactor = 0.0f;
 	CrosshairShootingFactor = 0.0f;
 	bFiringBullet = false;
+
+	//Item trave variables 
+	bShouldTraceForItems = false;
 
 
 }
@@ -175,7 +180,7 @@ void ASurvivalCharacter::FireWeapon()
 					//Start bullet fire for crosshairs
 					FinishCrosshairBulletFire();
 
-					//Get current size of the viewport
+					////Get current size of the viewport
 					FVector2D ViewportSize;
 
 					if (GEngine && GEngine->GameViewport)
@@ -183,21 +188,24 @@ void ASurvivalCharacter::FireWeapon()
 						GEngine->GameViewport->GetViewportSize(ViewportSize);
 					}
 
-					//Get screen location of corsshair
+					////Get screen location of corsshair
 					FVector2D CrosshairLocation(ViewportSize.X / 2.0f, ViewportSize.Y / 2.0f);
 					FVector CrosshairWorldPosition;
 					FVector CrosshairWorldDirection;
 
-					//Get worldposition and direction of crosshair
+					////Get worldposition and direction of crosshair
 					bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
 						UGameplayStatics::GetPlayerController(this, 0),
 						CrosshairLocation,
 						CrosshairWorldPosition,
 						CrosshairWorldDirection);
 
+					//Check for crosshairs trace hit
+				
+
 					if (bScreenToWorld) //was the DeprojectScreenToWorld successful?
 					{
-						//Variables to hit our bullets: Hit, where the bullet starts and when the bullet ends
+						////Variables to hit our bullets: Hit, where the bullet starts and when the bullet ends
 						FHitResult ScreenTraceHit;
 						const FVector Start{ CrosshairWorldPosition };
 						FVector End{ CrosshairWorldPosition + CrosshairWorldDirection * ShootingDistance };
@@ -207,6 +215,8 @@ void ASurvivalCharacter::FireWeapon()
 
 						
 
+
+
 						//If our bullets hit an mesh then spawn the particles
 						if (ScreenTraceHit.bBlockingHit)
 						{
@@ -214,10 +224,18 @@ void ASurvivalCharacter::FireWeapon()
 							{
 								UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), impactParticles, ScreenTraceHit.Location);
 							}
+
+
+							
+
 						}
+						
 
 
 					}
+
+
+
 
 
 
@@ -239,6 +257,95 @@ void ASurvivalCharacter::EnableFire()
 {
 
 	bIsShoot = true;
+
+}
+
+bool ASurvivalCharacter::TraceUnderCorsshairs(FHitResult& OutHitResult)
+{
+	//Get viewport size
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	//Get screen space location of crosshairs
+	FVector2D CrosshairsLocation(ViewportSize.X / 2, ViewportSize.Y / 2);
+	FVector CrosshairsWorldPosition;
+	FVector CorsshairsWorldDirection;
+
+	//Get world position and direction of c0orsshairs
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairsLocation,
+		CrosshairsWorldPosition,
+		CorsshairsWorldDirection
+	);
+
+	if (bScreenToWorld)
+	{
+		//Trace from corsshair world location outward
+		FVector Start{ CrosshairsWorldPosition };
+		FVector End{ Start + CorsshairsWorldDirection * ShootingDistance};
+		GetWorld()->LineTraceSingleByChannel(
+			OutHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility);
+	}
+
+	if (OutHitResult.bBlockingHit)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+	return false;
+}
+
+void ASurvivalCharacter::TraceForItems()
+{
+	if (bShouldTraceForItems)
+	{
+		FHitResult CrosshairsHitResult;
+		bool bScreenToWorld = TraceUnderCorsshairs(CrosshairsHitResult);
+		AItem* HitItem = Cast< AItem>(CrosshairsHitResult.GetActor());
+		if (HitItem && HitItem->GetPickupWidget())
+		{
+			//Show item's pickup widget
+			HitItem->GetPickupWidget()->SetVisibility(true);
+		}
+
+
+		
+	
+
+		//We hit an AItem last frame
+		if (TraceHitItemLastFrame)
+		{	
+			if (HitItem != TraceHitItemLastFrame)
+			{
+				//We are hitting a different AItem this frame from last frame 
+				//Or AItem is null
+				TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+			}
+		}
+
+		//Store a reference to HitItem for next frame
+		TraceHitItemLastFrame = HitItem;
+
+		
+	}
+	else if(!bShouldTraceForItems && TraceHitItemLastFrame)
+	{
+		//No longer overlapping any itmes 
+		//Item last frame should not show widget
+		TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+
+	}
+
 
 }
 
@@ -364,7 +471,11 @@ void ASurvivalCharacter::Tick(float DeltaTime)
 	//Calcualte corsshair spread multiplier
 	CalculateCorsshairSpread(DeltaTime);
 
-	if (GEngine)
+	//Check overlappedItemCount, then trace for items
+	TraceForItems();
+
+
+	if (GEngine) 
 	{
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("IsHolding?, %s"), test ? TEXT("true") : TEXT("false")));
 
@@ -495,6 +606,22 @@ float ASurvivalCharacter::GetCrosshairSpreadMultiplier()
 {
 	return 	CrosshairSpreadMuliplier;
 
+}
+
+void ASurvivalCharacter::IncrementOverlappedItemCount(int8 Amount)
+{
+
+	if (OverlappedItemCount + Amount <= 0)
+	{
+		OverlappedItemCount = 0;
+		bShouldTraceForItems = false;
+	}
+	else
+	{
+		OverlappedItemCount += Amount;
+		bShouldTraceForItems = true;
+
+	}
 }
 
 
