@@ -55,6 +55,36 @@ protected:
 	void FinishCrosshairBulletFire();	
 	void StartCorsshairBulletFire();
 
+	//Spawns a default weapon and equips it
+	class AWeapon* SpawnDefaultWeapon();
+
+	//Takes a weapon and attaches it to the mesh
+	void EquipWeapon(class AWeapon* WeponToEquip);
+
+	//Detach weapon 
+	void DropWeapon();
+
+	void SelectButtonPressed();
+	void SelectButtonReleased();
+
+	void NoWeapon();
+
+
+	void IsJogging();
+	void IsNotJoggin();
+
+
+	void PlayerWeaponAtStart();
+
+	//Equips TraceHitItem
+	void SwapWeapon(AWeapon* WeaponToSwap);
+
+
+	//Functions to take care of jogging as the player is aiming or not 
+
+	void SetIsNotJogging();
+
+	void SetIsJogging();
 
 
 public:
@@ -77,6 +107,8 @@ public:
 
 	//Set camera FOV smoothly
 	void SetCameraFOV(float DeltaTime);
+
+	
 
 
 
@@ -162,6 +194,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true), meta = (ClampMin = "0.0", ClampMax = "1.0", UIMIN = "0.0", UIMAX = "1.0"))
 		float AimginSpeedWhenIsNotAimingSides;
 
+	//Bool which says if the gun has been equipped
+	bool bGunHasBeenEquipped;
+
+	//Bool to determinte if the key to fog has been pressed
+	bool bIsPressingTheJogginKey;
 
 	//crosshair spread
 
@@ -179,7 +216,8 @@ private:
 
 	//Variable to change the velocity spread in the CrosshairSpreadMuliplier variable when we are shooting
 	float CrosshairShootingFactor;
-
+	
+	//Endcrosshair spread
 	
 	//Variable to check if our player has shooted or not to controll the corsshair shooting movement
 	bool bFiringBullet;
@@ -194,7 +232,41 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Items, meta = (AllowPrivateAccess = "true"))
 	class AItem* TraceHitItemLastFrame;
 
+	//Currently equipped weapon
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class AWeapon* EqquipedWeapon;
 
+	//Set this in Blueprints for the default weapong class
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+	//Montage to equip the gun
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* EquipGunMontage;
+
+	//Montage to equip the gun
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* PullsOutGunMontage;
+
+	//Bool to check if our player has an weapon equipped 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
+	bool bHasAWeapon;
+
+	//Bool to check if the player is jogging 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
+	bool bIsJogging;
+	
+	//Float to indicate the character velocity when it's walking
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float WalkingSpeed;
+
+	//Float to indicate the character velocity when it's Jogging
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float JoggingSpeed;
+
+	//The Item currently hit by our trauce in TraceForIntems() (it could be null)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItem;
 
 public:
 
@@ -227,4 +299,18 @@ public:
 
 	//Add/subtract to/from overlappedItemCount and updates bShouldTraceFromItems
 	void IncrementOverlappedItemCount(int8 Amount);
+
+
+
+	FORCEINLINE bool GetbHasAWeapon()
+	{
+		return bHasAWeapon;
+	}
+
+	FORCEINLINE bool GetbIsJoging()
+	{
+		return bIsJogging;
+	}
+
+
 };
