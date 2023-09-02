@@ -6,8 +6,7 @@ crawling with zombies. This project will be finished in December 2023.
 
 In this repository you'll find the c++ code used to make this game 
 
-My tasks: In this project, I am also taking on the project manager role, although it is less
-demanding due to the number of members involved. As a programmer, I am writing
+My tasks: In this project, I am also taking on the project manager role. As a programmer, I am writing
 most of the logic in C++ (character movement, shooting system, AI...), animations with
 blend spaces, and creating custom blueprints from C++.
 
