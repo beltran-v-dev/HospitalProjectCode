@@ -12,6 +12,10 @@
 #include "DrawDebugHelpers.h"
 #include "Item.h"
 #include "Components/WidgetComponent.h"
+#include "Weapon.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Components/BoxComponent.h"
 
 
 
@@ -89,6 +93,18 @@ ASurvivalCharacter::ASurvivalCharacter()
 	bShouldTraceForItems = false;
 
 
+	bHasAWeapon = false;
+
+
+	WalkingSpeed = 150.0f;
+	JoggingSpeed = 300.0f;
+	bIsJogging = false;
+
+	bGunHasBeenEquipped = false;
+
+	bIsPressingTheJogginKey = false;
+
+	
 }
 
 // Called when the game starts or when spawned
@@ -102,6 +118,13 @@ void ASurvivalCharacter::BeginPlay()
 		CameraCurrentFOV = CameraDefaultFOV;
 	}
 
+	//Spawn the default weapon and equip it
+	EquipWeapon(SpawnDefaultWeapon());
+
+
+	PlayerWeaponAtStart();
+
+
 }
 
 void ASurvivalCharacter::FireWeapon()
@@ -109,7 +132,7 @@ void ASurvivalCharacter::FireWeapon()
 
 	//UE_LOG(LogTemp, Warning, TEXT("Fire Button"));
 
-	if (bIsShoot && bIsAiming)
+	if (bIsShoot && bIsAiming && bHasAWeapon)
 	{
 		bIsShoot = false;
 		
@@ -134,6 +157,22 @@ void ASurvivalCharacter::FireWeapon()
 					const USkeletalMeshSocket* BarrelSocket = ChildSkeletalMeshComponent->GetSocketByName("barrelSocket");
 
 					const FTransform socketTransform = BarrelSocket->GetSocketTransform(ChildSkeletalMeshComponent);
+
+
+					//--------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+					//----------------------------------------------------------------------------------------------------------
+
+
+
+
 
 					if (bIsShoot == false)
 					{
@@ -311,11 +350,11 @@ void ASurvivalCharacter::TraceForItems()
 	{
 		FHitResult CrosshairsHitResult;
 		bool bScreenToWorld = TraceUnderCorsshairs(CrosshairsHitResult);
-		AItem* HitItem = Cast< AItem>(CrosshairsHitResult.GetActor());
-		if (HitItem && HitItem->GetPickupWidget())
+		TraceHitItem = Cast< AItem>(CrosshairsHitResult.GetActor());
+		if (TraceHitItem && TraceHitItem->GetPickupWidget())
 		{
 			//Show item's pickup widget
-			HitItem->GetPickupWidget()->SetVisibility(true);
+			TraceHitItem->GetPickupWidget()->SetVisibility(true);
 		}
 
 
@@ -325,7 +364,7 @@ void ASurvivalCharacter::TraceForItems()
 		//We hit an AItem last frame
 		if (TraceHitItemLastFrame)
 		{	
-			if (HitItem != TraceHitItemLastFrame)
+			if (TraceHitItem != TraceHitItemLastFrame)
 			{
 				//We are hitting a different AItem this frame from last frame 
 				//Or AItem is null
@@ -334,7 +373,7 @@ void ASurvivalCharacter::TraceForItems()
 		}
 
 		//Store a reference to HitItem for next frame
-		TraceHitItemLastFrame = HitItem;
+		TraceHitItemLastFrame = TraceHitItem;
 
 		
 	}
@@ -454,6 +493,408 @@ void ASurvivalCharacter::StartCorsshairBulletFire()
 	bFiringBullet = false;
 }
 
+AWeapon* ASurvivalCharacter::SpawnDefaultWeapon()
+{
+
+//Check the TSubclasOf variable 
+	if (DefaultWeaponClass)
+	{
+		//Spawn the Weapon
+		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+
+		//return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+
+	
+	}
+	return nullptr;
+
+
+}
+
+void ASurvivalCharacter::EquipWeapon(AWeapon* WeponToEquip)
+{
+
+	if (WeponToEquip)
+	{
+		
+
+
+
+		//Get the Hand Socket
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("Pistol_Socket"));
+
+		//Check the HandSocket variable 
+		if (HandSocket)
+		{
+			//Attach the Weapon to the hand socket
+			HandSocket->AttachActor(WeponToEquip, GetMesh());
+		}
+
+		//Set EqquipedWeapon to the newly spawned Weapon
+		EqquipedWeapon = WeponToEquip;
+		EqquipedWeapon->SetItemState(EItemState::EIS_Equipped);
+	}
+
+
+
+}
+
+void ASurvivalCharacter::DropWeapon()
+{
+
+	if (EqquipedWeapon)
+	{
+		FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+		EqquipedWeapon->GetItemMesh()->DetachFromComponent(DetachmentTransformRules);
+	}
+
+
+}
+
+void ASurvivalCharacter::SelectButtonPressed()
+{
+	//bHasAWeapon = true;
+
+	if (TraceHitItem)
+	{
+		auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
+		SwapWeapon(TraceHitWeapon);
+		bHasAWeapon = true;
+
+		bGunHasBeenEquipped = true;
+
+			if (bHasAWeapon)
+			{
+				if (MainSkeletalMesh)
+				{
+
+					TArray<FName> ChildComponentNames = { FName("SM_HolsterWeapon"), FName("SM_HolsterNoWeapon") };
+
+
+					for (USceneComponent* childComponent : MainSkeletalMesh->GetAttachChildren())
+					{
+						USkeletalMeshComponent* ChildSkeletalMeshComponent = Cast<USkeletalMeshComponent>(childComponent);
+
+						if (ChildSkeletalMeshComponent)
+						{
+
+							FName ComponentName = *ChildSkeletalMeshComponent->GetName();  // Get the name of the child component
+
+							if (ChildComponentNames.Contains(ComponentName))
+							{
+
+								if (ComponentName == FName("SM_HolsterWeapon"))
+								{
+									ChildSkeletalMeshComponent->SetVisibility(false);
+
+
+								}
+								else if (ComponentName == FName("SM_HolsterNoWeapon"))
+								{
+
+									ChildSkeletalMeshComponent->SetVisibility(true);
+
+
+								}
+
+							}
+
+
+						}
+
+					}
+				}
+
+			}
+
+	}
+	
+	
+
+}
+
+void ASurvivalCharacter::SelectButtonReleased()
+{
+
+
+}
+
+void ASurvivalCharacter::NoWeapon()
+{
+
+	//Getting the anim instance from the character
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+
+if (bHasAWeapon == true)
+{
+	
+
+
+
+	//Checking that neither AnimInstance nor EquipGunMontage are not null
+	if (AnimInstance && EquipGunMontage)
+	{
+		
+		AnimInstance->Montage_Play(EquipGunMontage);
+		AnimInstance->Montage_JumpToSection(FName("EquipGun"));
+
+		// Delay the visibility change until the montage is done
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+				if (EqquipedWeapon)
+				{
+					EqquipedWeapon->GetItemMesh()->SetVisibility(false);
+
+
+					if (MainSkeletalMesh)
+					{
+
+						TArray<FName> ChildComponentNames = { FName("SM_HolsterWeapon"), FName("SM_HolsterNoWeapon") };
+
+
+							for (USceneComponent* childComponent : MainSkeletalMesh->GetAttachChildren())
+							{
+								USkeletalMeshComponent* ChildSkeletalMeshComponent = Cast<USkeletalMeshComponent>(childComponent);
+
+								if (ChildSkeletalMeshComponent)
+								{
+
+									FName ComponentName = *ChildSkeletalMeshComponent->GetName();  // Get the name of the child component
+
+								if (ChildComponentNames.Contains(ComponentName))
+								{
+
+									if (ComponentName == FName("SM_HolsterWeapon"))
+									{
+										ChildSkeletalMeshComponent->SetVisibility(true); 
+										
+
+									}
+									else if (ComponentName == FName("SM_HolsterNoWeapon"))
+									{
+									
+										ChildSkeletalMeshComponent->SetVisibility(false);
+
+
+									}
+
+								}
+
+
+							}
+							
+						}
+					}
+					bHasAWeapon = false;
+					bIsShoot = false;
+
+				}
+			}, 0.6f, false);
+
+												
+						
+
+	}
+	
+
+
+
+
+
+
+
+	
+
+	}
+
+	if (bHasAWeapon == false && TraceHitItem && bGunHasBeenEquipped == true)
+	{
+
+
+	//Checking that neither AnimInstance nor EquipGunMontage are not null
+	if (AnimInstance && PullsOutGunMontage)
+	{
+
+		AnimInstance->Montage_Play(PullsOutGunMontage);
+		AnimInstance->Montage_JumpToSection(FName("PullsOutGun"));
+
+		// Delay the visibility change until the montage is done
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+			{
+				if (EqquipedWeapon)
+				{
+					EqquipedWeapon->GetItemMesh()->SetVisibility(true);
+
+
+					if (MainSkeletalMesh)
+					{
+
+						TArray<FName> ChildComponentNames = { FName("SM_HolsterWeapon"), FName("SM_HolsterNoWeapon") };
+
+
+						for (USceneComponent* childComponent : MainSkeletalMesh->GetAttachChildren())
+						{
+							USkeletalMeshComponent* ChildSkeletalMeshComponent = Cast<USkeletalMeshComponent>(childComponent);
+
+							if (ChildSkeletalMeshComponent)
+							{
+
+								FName ComponentName = *ChildSkeletalMeshComponent->GetName();  // Get the name of the child component
+
+								if (ChildComponentNames.Contains(ComponentName))
+								{
+
+									if (ComponentName == FName("SM_HolsterWeapon"))
+									{
+										ChildSkeletalMeshComponent->SetVisibility(false);
+
+
+									}
+									else if (ComponentName == FName("SM_HolsterNoWeapon"))
+									{
+
+										ChildSkeletalMeshComponent->SetVisibility(true);
+
+
+									}
+
+								}
+
+
+							}
+
+						}
+					}
+					bHasAWeapon = true;
+					bIsShoot = true;
+
+				}
+			}, 0.4f, false);
+
+
+
+
+	}
+
+	}
+
+
+
+}
+
+void ASurvivalCharacter::IsJogging()
+{
+
+
+	bIsPressingTheJogginKey = true;
+
+
+	if (!bIsAiming)
+	{
+	
+		SetIsJogging();
+	}
+	
+
+
+}
+
+void ASurvivalCharacter::IsNotJoggin()
+{
+	bIsPressingTheJogginKey = false;
+
+
+	SetIsNotJogging();
+	
+
+
+}
+
+void ASurvivalCharacter::PlayerWeaponAtStart()
+{
+
+	if (EqquipedWeapon)
+	{
+		EqquipedWeapon->GetItemMesh()->SetVisibility(false);
+
+
+		if (MainSkeletalMesh)
+		{
+
+			TArray<FName> ChildComponentNames = { FName("SM_HolsterWeapon"), FName("SM_HolsterNoWeapon") };
+
+
+			for (USceneComponent* childComponent : MainSkeletalMesh->GetAttachChildren())
+			{
+				USkeletalMeshComponent* ChildSkeletalMeshComponent = Cast<USkeletalMeshComponent>(childComponent);
+
+				if (ChildSkeletalMeshComponent)
+				{
+
+					FName ComponentName = *ChildSkeletalMeshComponent->GetName();  // Get the name of the child component
+
+					if (ChildComponentNames.Contains(ComponentName))
+					{
+
+						if (ComponentName == FName("SM_HolsterWeapon"))
+						{
+							ChildSkeletalMeshComponent->SetVisibility(false);
+
+
+						}
+						else if (ComponentName == FName("SM_HolsterNoWeapon"))
+						{
+
+							ChildSkeletalMeshComponent->SetVisibility(false);
+
+
+						}
+
+					}
+
+
+				}
+
+			}
+		}
+
+
+	}
+
+
+	
+}
+
+void ASurvivalCharacter::SwapWeapon(AWeapon* WeaponToSwap)
+{
+	EquipWeapon(WeaponToSwap);
+
+
+
+}
+
+
+//Enables or disables the bIsJogging variale and change the MaxWalkSpeed
+
+void ASurvivalCharacter::SetIsNotJogging()
+{
+	bIsJogging = false;
+	ASurvivalCharacter::GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+
+}
+
+void ASurvivalCharacter::SetIsJogging()
+{
+	bIsJogging = true;
+	ASurvivalCharacter::GetCharacterMovement()->MaxWalkSpeed = JoggingSpeed;
+
+}
+
+	
+
 
 
 
@@ -477,10 +918,11 @@ void ASurvivalCharacter::Tick(float DeltaTime)
 
 	if (GEngine) 
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("IsHolding?, %s"), test ? TEXT("true") : TEXT("false")));
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("HasAWeapon?, %s"), bHasAWeapon ? TEXT("true") : TEXT("false")));
 
-		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("IsAiming?, %s"), bHasBeenAimingWalk ? TEXT("true") : TEXT("false")));
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("IsJoggin?, %s"), bIsJogging ? TEXT("true") : TEXT("false")));
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("velocity?, %f"), this->GetVelocity().Size()));
+
 
 
 
@@ -518,6 +960,17 @@ void ASurvivalCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("IsAiming", IE_Pressed, this, &ASurvivalCharacter::IsAiming);
 	PlayerInputComponent->BindAction("IsAiming", IE_Released, this, &ASurvivalCharacter::IsNotAiming);
 
+	PlayerInputComponent->BindAction("Select", IE_Pressed, this, &ASurvivalCharacter::SelectButtonPressed);
+	PlayerInputComponent->BindAction("Select", IE_Released, this, &ASurvivalCharacter::SelectButtonReleased);
+
+	PlayerInputComponent->BindAction("NoWeapon", IE_Pressed, this, &ASurvivalCharacter::NoWeapon);
+
+
+
+	PlayerInputComponent->BindAction("Jogging", IE_Pressed, this, &ASurvivalCharacter::IsJogging);
+	PlayerInputComponent->BindAction("Jogging", IE_Released, this, &ASurvivalCharacter::IsNotJoggin);
+
+	
 
 
 }
@@ -563,10 +1016,20 @@ void ASurvivalCharacter::MoveRightLeft(float value)
 
 void ASurvivalCharacter::IsAiming()
 {
+
 	bIsAiming = true;
+	
+
+	if (bIsAiming && bIsPressingTheJogginKey)
+	{
+
+		SetIsNotJogging();
+	}
+
+		
 
 
-
+	
 
 }
 
@@ -574,7 +1037,21 @@ void ASurvivalCharacter::IsNotAiming()
 {
 	bIsAiming = false;
 
+	
+	if (bIsPressingTheJogginKey)
+	{
+		SetIsJogging();
+	}
+
+	
+
+
+
+		
+
+
 }
+	
 
 
 
@@ -584,10 +1061,14 @@ void ASurvivalCharacter::SetCameraFOV(float DeltaTime)
 
 
 	//Set current camera filed of view
-	if (bIsAiming)
+	//if (bIsAiming && bHasAWeapon == true && bIsJogging == false)
+	if ((bIsAiming == true && bIsJogging == false)  && bHasAWeapon == true )
 	{
 		//Interpoalete to zoomed FOV
 		CameraCurrentFOV = FMath::FInterpTo(CameraCurrentFOV, CameraZoomedFOV, DeltaTime, ZoomInterpSpeed);
+		//ASurvivalCharacter::GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+		//bIsJogging = false;
+		//IsNotJoggin();
 
 	}
 	else
