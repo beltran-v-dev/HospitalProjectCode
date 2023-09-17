@@ -10,7 +10,19 @@
 
 
 
+UENUM(BlueprintType)
+enum class EItemState : uint8
+{
+	EIS_Pickup UMETA(DisplayName = "Pickup"),
+	EIS_EquipInterping UMETA(DisplayName = "EquipInterping"),
+	EIS_PickedUp UMETA(DisplayName = "PickedUp"),
+	EIS_Equipped UMETA(DisplayName = "Equipped"),
 
+	EIS_MAX UMETA(DisplayName = "DefaultMAX")
+
+
+
+};
 
 
 UCLASS()
@@ -46,6 +58,12 @@ UFUNCTION()
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
+
+//Set properties of the Item's componentes based on State
+	void SetItemProperties(EItemState State);
+
+
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -57,6 +75,12 @@ private:
 	//Skeletalmesh for the item
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* ItemMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* Silencer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	 UStaticMeshComponent* Magazine;
 	
 	//Line trace collides with box to show HUD widgets
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
@@ -65,6 +89,10 @@ private:
 	//Popup widget when the player looks at the item
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* PickupWidget;
+
+	//Popup widget when the player has pressed the key to get it
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class UWidgetComponent* InformationWidget;
 
 	//Enable item traicing when overlap
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
@@ -82,6 +110,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	UTexture2D* ItemTexture;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UTexture2D* BulletsItemTexture;
+
+	//State of the item
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	EItemState ItemState;
+
 
 public:
 
@@ -89,5 +124,44 @@ public:
 	{
 		return PickupWidget;
 	}
+
+	FORCEINLINE UWidgetComponent* GetInformationpWidget()
+	{
+		return InformationWidget;
+	}
+
+	FORCEINLINE USphereComponent* GetAreaSphere()
+	{
+		return AreaSphere;
+	}
+
+	FORCEINLINE UBoxComponent* GetCollisionBox()
+	{
+		return CollisionBox;
+	}
+
+	FORCEINLINE EItemState GetItemState()
+	{
+		return ItemState;
+	}
+
+	void SetItemState(EItemState State);
+
+
+	FORCEINLINE USkeletalMeshComponent* GetItemMesh()
+	{
+		return ItemMesh;
+	}
+
+	FORCEINLINE UStaticMeshComponent* GetSilencerMesh()
+	{
+		return Silencer;
+	}
+
+	FORCEINLINE UStaticMeshComponent* GetMagazinerMesh()
+	{
+		return Magazine;
+	}
+
 
 };
