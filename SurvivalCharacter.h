@@ -5,7 +5,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AmmoType.h"
 #include "SurvivalCharacter.generated.h"
+
+
+UENUM(BlueprintType)
+enum class EComabtState : uint8
+{
+	ECS_NoWeapon UMETA(DisplayName = "NoWeapon"),
+	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
+	ECS_FireTimerInProgress UMETA(DisplayName = "FireTimerInProgress"),
+	ECS_Reloading UMETA(DisplayName = "Reloading"),
+
+
+	ECS_MAX UMETA(DisplayName = "ECS_Max")
+
+};
 
 UCLASS()
 class HOSPITALPROJECT_API ASurvivalCharacter : public ACharacter
@@ -61,8 +76,8 @@ protected:
 	//Takes a weapon and attaches it to the mesh
 	void EquipWeapon(class AWeapon* WeponToEquip);
 
-	//Detach weapon 
-	void DropWeapon();
+	//Detach weapon and let it fall to the ground
+	//void DropWeapon();
 
 	void SelectButtonPressed();
 	void SelectButtonReleased();
@@ -76,8 +91,8 @@ protected:
 
 	void PlayerWeaponAtStart();
 
-	//Equips TraceHitItem
-	void SwapWeapon(AWeapon* WeaponToSwap);
+	//Equips TraceHitItem.
+	void EquipNewWeapon(AWeapon* NewWeaponToEquip);
 
 
 	//Functions to take care of jogging as the player is aiming or not 
@@ -85,6 +100,34 @@ protected:
 	void SetIsNotJogging();
 
 	void SetIsJogging();
+
+	//Initialize the AmmoMap with ammo values
+	void InitializeAmmoMap();
+
+	//Check to make sure out wapon has ammo
+	bool WeaponHasAmmo();
+
+	//FireWeapon functions
+
+	void PlayFireSound();
+	void MuzzleFlashPlaced();
+	void PlayGunFireMontage();
+
+
+	//Bound to the R key
+	void ReloadButtonPressed();
+
+	//Handle reloading of the weapon
+	void ReloadWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
+
+	//Checks to see if we have ammo of the EquippedWeapon's ammo type
+	bool CarryingAmmo();
+
+
+	
 
 
 public:
@@ -236,7 +279,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	class AWeapon* EqquipedWeapon;
 
-	//Set this in Blueprints for the default weapong class
+	//Set this in Blueprints for the default weapon class
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AWeapon> DefaultWeaponClass;
 
@@ -267,6 +310,29 @@ private:
 	//The Item currently hit by our trauce in TraceForIntems() (it could be null)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AItem* TraceHitItem;
+
+	//Map to keep track of ammo of different ammo types
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	TMap<EAmmoType, int32> AmmoMap;
+
+	//Starting amount gun ammo
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Items, meta = (AllowPrivateAccess = "true"))
+	int32 StartingGunAmmo;
+
+	//Starting amount riffle ammo
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Items, meta = (AllowPrivateAccess = "true"))
+	int32 StartingRiffleAmmo;
+
+	//Combat State, can only fire or reload if Unoccupied
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	 EComabtState CombatState;
+	
+	//Montage for reaload Animations 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ReloadMontage;
+
+	
+
 
 public:
 
