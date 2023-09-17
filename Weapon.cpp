@@ -1,67 +1,103 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#pragma once
 
-#include "Weapon.h"
+#include "CoreMinimal.h"
+#include "Item.h"
+#include "AmmoType.h"
+#include "Weapon.generated.h"
 
-AWeapon::AWeapon()
+
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
 {
-	PrimaryActorTick.bCanEverTick = true;
-	Ammo = 32;
-	WeaponType = EWeaponType::EWT_Gun;
-	AmmoType = EAmmoType::EAT_GunAmmo;
-	ReloadMontageSection = FName(TEXT("Reload_Gun")); 
-	MagazineCapacity = 8;
+	EWT_NoWeapon UMETA(DisplayName = "NoWeapon"),
+	EWT_Rope UMETA(DisplayName = "Rope"),
+	EWT_Gun UMETA(DisplayName = "Gun"),
+	EWT_Riffle UMETA(DisplayName = "Riffle"),
 
-	MaxCapacity = MagazineCapacity;
+	EWT_MAX UMETA(DisplayName = "DefaultMax")
+};
+
+/**
+ * 
+ */
+UCLASS()
+class HOSPITALPROJECT_API AWeapon : public AItem
+{
+	GENERATED_BODY()
+	
+public:
+	AWeapon();
+
+	virtual void Tick(float DeltaTime) override;
+
+protected:
+
+private:
+
+	//Max ammo that our weapon can hold
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	int32 Ammo;
+
+	//Maximum ammo that every magazine can hold
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	int32 MagazineCapacity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	int32 MaxCapacity;
 
 	
+	//Type of weapon
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	EWeaponType WeaponType;
 
-}
+	//Type of ammo for this weapon
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	EAmmoType AmmoType;
 
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
+	//FName for the Reload Montage section
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	FName ReloadMontageSection;
 
-void AWeapon::DecreaseAmmo()
-{
-	/*if (!(Ammo <= 0))
+
+
+
+public:
+
+	FORCEINLINE int32 GetAmmo()
 	{
-		--Ammo;
-	}*/
-
-
-	if (!(MagazineCapacity <= 0))
-	{
-		--MagazineCapacity;
-	
-
-	
+		return Ammo;
 	}
 
-	
-	
-	
-}
+	FORCEINLINE  int32 GetMagazineCapacity()
+	{
+		return MagazineCapacity;
+	}
 
-void AWeapon::ReloadAmmo(int32 Ammount)
-{
-	//Revisar
-
-	//checkf(Ammo + Ammount <= MagazineCapacity, TEXT(""));
-	MagazineCapacity += Ammount;
-
-	//Ammo += Ammount;
-
-}
-
-int32 AWeapon::MaxCapacityMagazine() const
-{
-	
-
-	return MaxCapacity;
-}
+	//Called from character class when firing weapon
+	void DecreaseAmmo();
 
 
+	FORCEINLINE EWeaponType GetWeaponType()
+	{
+		return WeaponType;
+	}
+
+	FORCEINLINE EAmmoType GetAmmoType()
+	{
+		return AmmoType;
+	}
+
+	FORCEINLINE FName GetReloadMontageSection()
+	{
+		return ReloadMontageSection;
+	}
+
+	void ReloadAmmo(int32 Ammount);
+
+	 int32 MaxCapacityMagazine() const;
 
 
+
+};
