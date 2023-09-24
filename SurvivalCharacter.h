@@ -126,7 +126,7 @@ protected:
 	//Checks to see if we have ammo of the EquippedWeapon's ammo type
 	bool CarryingAmmo();
 
-
+	void CrouchButtonPressed();
 	
 
 
@@ -331,8 +331,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* ReloadMontage;
 
-	
-
+	//Ture when crouching
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bIsCrouching;
 
 public:
 
@@ -376,6 +377,11 @@ public:
 	FORCEINLINE bool GetbIsJoging()
 	{
 		return bIsJogging;
+	}
+
+	FORCEINLINE bool GetCrouching()
+	{
+		return bIsCrouching;
 	}
 
 
