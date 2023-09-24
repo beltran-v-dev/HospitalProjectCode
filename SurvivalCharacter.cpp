@@ -104,6 +104,8 @@
 
 		bIsPressingTheJogginKey = false;
 
+		bIsCrouching = false;
+
 
 
 	}
@@ -127,7 +129,7 @@
 
 
 		EqquipedWeapon->GetSilencerMesh()->SetVisibility(false);
-		EqquipedWeapon->GetMagazinerMesh()->SetVisibility(false);
+		
 
 		CombatState = EComabtState::ECS_NoWeapon;
 
@@ -473,7 +475,7 @@
 			CombatState = EComabtState::ECS_Unoccupied;
 																		
 			//Get the Hand SocketEqquipedWeapon
-			const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("Pistol_Socket"));
+			const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
 
 			//Check the HandSocket variable 
 			if (HandSocket)
@@ -496,18 +498,6 @@
 
 	}
 
-	//void ASurvivalCharacter::DropWeapon()
-	//{
-	//
-	//	if (EqquipedWeapon)
-	//	{
-	//		FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
-	//		EqquipedWeapon->GetItemMesh()->DetachFromComponent(DetachmentTransformRules);
-	//	}
-	//
-	//
-	//
-	//}
 
 	void ASurvivalCharacter::SelectButtonPressed()
 	{
@@ -515,14 +505,19 @@
 
 		if (TraceHitItem)
 		{
+			
+
 			auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
 			EquipNewWeapon(TraceHitWeapon);
 			bHasAWeapon = true;
 
-			bGunHasBeenEquipped = true;
+			
 
 				if (bHasAWeapon)
 				{
+
+					bGunHasBeenEquipped = true;
+
 					CombatState = EComabtState::ECS_Unoccupied;
 
 					InitializeAmmoMap();
@@ -583,6 +578,7 @@
 
 
 		}
+
 
 	
 	
@@ -676,7 +672,6 @@
 						bHasAWeapon = false;
 						bIsShoot = false;
 						EqquipedWeapon->GetSilencerMesh()->SetVisibility(false);
-						EqquipedWeapon->GetMagazinerMesh()->SetVisibility(false);
 
 					}
 				}, 0.6f, false);
@@ -763,7 +758,6 @@
 						bHasAWeapon = true;
 						bIsShoot = true;
 						EqquipedWeapon->GetSilencerMesh()->SetVisibility(true);
-						EqquipedWeapon->GetMagazinerMesh()->SetVisibility(true);
 
 					}
 				}, 0.4f, false);
@@ -955,7 +949,6 @@
 	{
 
 		ReloadWeapon();
-		
 
 
 	}
@@ -967,11 +960,9 @@
 
 		if (EqquipedWeapon == nullptr || bHasAWeapon == false) return;
 
-
-
 		//Do we have ammo of the correct type?
 
-		if (CarryingAmmo()) 
+		if (CarryingAmmo() && EqquipedWeapon->IsCarryingMaxCapacity())
 		{
 			CombatState = EComabtState::ECS_Reloading;
 
@@ -982,7 +973,6 @@
 			{
 				AnimInstance->Montage_Play(ReloadMontage);
 				AnimInstance->Montage_JumpToSection(EqquipedWeapon->GetReloadMontageSection());
-				
 			}
 		}
 
@@ -992,9 +982,6 @@
 
 	void ASurvivalCharacter::FinishReloading()
 	{
-
-		//EqquipedWeapon->GetMagazinerMesh()->SetVisibility(false);
-
 
 		CombatState = EComabtState::ECS_Unoccupied;
 
@@ -1050,7 +1037,12 @@
 		return false;
 	}
 
+	void ASurvivalCharacter::CrouchButtonPressed()
+	{
+		bIsCrouching = !bIsCrouching;
 
+
+	}
 
 
 
@@ -1132,6 +1124,9 @@
 
 
 		PlayerInputComponent->BindAction("ReloadButton", IE_Pressed, this, &ASurvivalCharacter::ReloadButtonPressed);
+
+		PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ASurvivalCharacter::CrouchButtonPressed);
+
 
 	
 
