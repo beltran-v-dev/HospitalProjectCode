@@ -15,7 +15,17 @@ class HOSPITALPROJECT_API USurvivalAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
+protected:
+
+	//Handle turning in place variables
+	void TurnInPlace();
+
+
+
 public:
+	USurvivalAnimInstance();
+
+
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateAnimationProperties(float deltaTime);
@@ -55,6 +65,30 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bIsJogging;
+
+	//TIPCharacterYaw of the character this frame, only updated when standing still
+	float TIPCharacterYaw;
+
+	//TIPCharacterYawLastFrame of the character the previous frame, only updated when standing still
+	float TIPCharacterYawLastFrame;
+
+	//Float to keep track of the offset we need to rotate the rootYaw back
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = TrunInPlace, meta = (AllowPrivateAccess = "true"))
+	float RootYawOffset;
+
+	//Rotation curve value this frame
+	float RotationCurve;
+
+	//Rotation curve value the previous frame
+	float RotationCruveLastFrame;
+
+	//Pitch value to manage the AimOffset from UnrealEngineEditor
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = TrunInPlace, meta = (AllowPrivateAccess = "true"))
+	float Pitch;
+
+	//True when crouching
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Crouching, meta = (AllowPrivateAccess = "true"))
+	bool bIsCrouching;
 
 
 
