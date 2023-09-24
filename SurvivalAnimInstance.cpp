@@ -7,8 +7,30 @@
 #include "Kismet/KismetMathLibrary.h"
 
 
+
+USurvivalAnimInstance::USurvivalAnimInstance()
+{
+
+	speed = 0.0f;
+	bIsAccelerating = false;
+	Direction = 0.0f;
+	DirectionBeforeStopping = 0.0f;
+	bIsAiming = false;
+	bHasAWeapon = false;
+	bIsJogging = false;
+	TIPCharacterYaw = 0.0f;
+	TIPCharacterYawLastFrame = 0.0f;
+	RootYawOffset = 0.0f;
+
+
+}
+
 void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 {
+
+
+
+
 
 	//Check that SurvivalCharacter is not null
 	if (!SurvivalCharacter)
@@ -71,11 +93,12 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 
 		bIsJogging = SurvivalCharacter->GetbIsJoging();
 	
-		
+		bIsCrouching = SurvivalCharacter->GetCrouching();
 	}
 
 	
 	
+	TurnInPlace();
 
 
 }
@@ -85,3 +108,61 @@ void USurvivalAnimInstance::NativeInitializeAnimation()
 	//Inialising SurvivalCharacter by TryGetPawnOwner
 	SurvivalCharacter = Cast<ASurvivalCharacter>(TryGetPawnOwner());
 }
+
+void USurvivalAnimInstance::TurnInPlace()
+{
+	if (SurvivalCharacter == nullptr) return;
+
+	Pitch = SurvivalCharacter->GetBaseAimRotation().Pitch;
+
+	if (speed > 0)
+	{
+		//DOn't want to tun in place, Character is moving
+		RootYawOffset = 0.0f;
+		TIPCharacterYaw = SurvivalCharacter->GetActorRotation().Yaw;
+		TIPCharacterYawLastFrame = TIPCharacterYaw;
+		RotationCruveLastFrame = 0.0f;
+		RotationCurve = 0.0f;
+	}
+	else
+	{
+		TIPCharacterYawLastFrame = TIPCharacterYaw;
+		TIPCharacterYaw = SurvivalCharacter->GetActorRotation().Yaw;
+
+		//Difference betwwen CharacterYawLastFrame and CharacterYaw this frame
+		const float TIPYawDelta = TIPCharacterYaw - TIPCharacterYawLastFrame;
+
+		//Rot Yaw Offset, updated and clamped to [-180, 180]
+		RootYawOffset = UKismetMathLibrary::NormalizeAxis(RootYawOffset - TIPYawDelta);
+
+		//1.0 if turning, 0.0 if not
+		const float Turning = GetCurveValue(TEXT("Turning"));
+		if (Turning > 0)
+		{
+			RotationCurve = RotationCruveLastFrame;
+			RotationCurve = GetCurveValue(TEXT("Turning"));
+			const float DeltaRotation = RotationCurve - RotationCruveLastFrame;
+
+			//If RootYawOffset >0 we are turning left, if it's <0 (negative values) we are turning right 
+			RootYawOffset > 0 ? RootYawOffset -= DeltaRotation : RootYawOffset += DeltaRotation;
+
+			const float AbsRootYawOffset = FMath::Abs(RootYawOffset);
+			if (AbsRootYawOffset > 45.0f)
+			{
+				const float YawExess = AbsRootYawOffset - 45.0f;
+
+				RootYawOffset > 0 ? RootYawOffset -= YawExess : RootYawOffset += YawExess;
+
+			}
+
+
+		}
+	
+
+	}
+
+}
+
+
+
+
