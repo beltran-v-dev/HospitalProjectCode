@@ -25,9 +25,7 @@ AItem::AItem()
 
 	Silencer = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Silencer"));
 	Silencer->SetupAttachment(ItemMesh);
-
-	Magazine = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Magazine"));
-	Magazine->SetupAttachment(ItemMesh, "MagazineSocket");
+	
 
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	CollisionBox->SetupAttachment(ItemMesh);
@@ -73,7 +71,6 @@ void AItem::BeginPlay()
 
 	//Set item properties based on ItemState
 	SetItemProperties(ItemState);
-
 
 }
 
