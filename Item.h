@@ -78,9 +78,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* Silencer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
-	 UStaticMeshComponent* Magazine;
 	
 	//Line trace collides with box to show HUD widgets
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
@@ -157,11 +154,5 @@ public:
 	{
 		return Silencer;
 	}
-
-	FORCEINLINE UStaticMeshComponent* GetMagazinerMesh()
-	{
-		return Magazine;
-	}
-
 
 };
