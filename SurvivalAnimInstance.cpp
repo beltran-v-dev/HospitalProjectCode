@@ -86,7 +86,7 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 
 
 		bIsAiming = SurvivalCharacter->GetAimingBool();		
-
+		
 
 
 		bHasAWeapon = SurvivalCharacter->GetbHasAWeapon();
@@ -94,6 +94,13 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 		bIsJogging = SurvivalCharacter->GetbIsJoging();
 	
 		bIsCrouching = SurvivalCharacter->GetCrouching();
+
+		if (SurvivalCharacter->GetEqquipedWeapon())
+		{
+			WeaponType = SurvivalCharacter->GetEqquipedWeapon()->GetWeaponType();
+		}
+		
+
 	}
 
 	
@@ -147,9 +154,9 @@ void USurvivalAnimInstance::TurnInPlace()
 			RootYawOffset > 0 ? RootYawOffset -= DeltaRotation : RootYawOffset += DeltaRotation;
 
 			const float AbsRootYawOffset = FMath::Abs(RootYawOffset);
-			if (AbsRootYawOffset > 45.0f)
+			if (AbsRootYawOffset > 60.0f)
 			{
-				const float YawExess = AbsRootYawOffset - 45.0f;
+				const float YawExess = AbsRootYawOffset - 60.0f;
 
 				RootYawOffset > 0 ? RootYawOffset -= YawExess : RootYawOffset += YawExess;
 

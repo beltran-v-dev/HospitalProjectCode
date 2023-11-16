@@ -11,7 +11,13 @@ class AHospitalProjectGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+
+
+
 };
+
+
+
 
 
 

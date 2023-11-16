@@ -5,23 +5,61 @@
 #include "CoreMinimal.h"
 #include "Item.h"
 #include "AmmoType.h"
+#include "WeaponType.h"
+#include "Engine/DataTable.h"
 #include "Weapon.generated.h"
 
 
-UENUM(BlueprintType)
-enum class EWeaponType : uint8
-{
-	EWT_NoWeapon UMETA(DisplayName = "NoWeapon"),
-	EWT_Rope UMETA(DisplayName = "Rope"),
-	EWT_Gun UMETA(DisplayName = "Gun"),
-	EWT_Riffle UMETA(DisplayName = "Riffle"),
+//UENUM(BlueprintType)
+//enum class EWeaponType : uint8
+//{
+//	EWT_NoWeapon UMETA(DisplayName = "NoWeapon"),
+//	EWT_Rope UMETA(DisplayName = "Rope"),
+//	EWT_Gun UMETA(DisplayName = "Gun"),
+//	EWT_Riffle UMETA(DisplayName = "Riffle"),
+//
+//	EWT_MAX UMETA(DisplayName = "DefaultMax")
+//};
 
-	EWT_MAX UMETA(DisplayName = "DefaultMax")
+USTRUCT(BlueprintType)
+struct FWeaponDataTable : public FTableRowBase
+{
+
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EAmmoType AmmoType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 WeaponAmmo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MagazineCapacity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundCue* PickUpSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletalMesh* ItemMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* InventoryIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* AmmoIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HeadShotDamage;
+	
+
 };
 
-/**
- * 
- */
+
+
+
 UCLASS()
 class HOSPITALPROJECT_API AWeapon : public AItem
 {
@@ -33,6 +71,17 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+
+	virtual void BeginPlay() override;
+
+	virtual void EnableCustomDepth() override;
+
+	virtual void DisableCustomDepth() override;
+
+	virtual void InitializeCustomDepth() override;
+
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 
 private:
 
@@ -60,10 +109,24 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 	FName ReloadMontageSection;
 
+	//Sound played when there is no ammo in the magazine
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	class USoundCue* NoAmmo;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* Silencer;
 	
+	//Data table for weapon properties
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data Table", meta = (AllowPrivateAccess = "true"))
+	UDataTable* WeaponDataTable;
 
+	//Amount of damage caused by a bullet
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	float Damage;
 
+	//Amount of damage when a bullet hits the head
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	float HeadShotDamage;
 
 public:
 
@@ -86,6 +149,11 @@ public:
 		return WeaponType;
 	}
 
+	 void SetWeaponType(EWeaponType newWeaponType)
+	{
+		WeaponType = newWeaponType;
+	}
+
 	FORCEINLINE EAmmoType GetAmmoType()
 	{
 		return AmmoType;
@@ -101,5 +169,35 @@ public:
 	 int32 MaxCapacityMagazine() const;
 
 	 bool IsCarryingMaxCapacity();
+
+
+	 FORCEINLINE USoundCue* GetNoAmmoSound()
+	 {
+		 return NoAmmo;
+	 }
+
+	 FORCEINLINE UStaticMeshComponent* GetSilencerMesh()
+	 {
+		 return Silencer;
+	 }
+
+	 void WeaponDisableCustomDepthWrapper() 
+	 { 
+		 DisableCustomDepth(); 
+	 
+	 }
+
+	 FORCEINLINE float GetDamage()
+	 {
+		 return Damage;
+	 }
+
+	 FORCEINLINE float GetHeadShotDamage()
+	 {
+		 return HeadShotDamage;
+	 }
+
+
+
 
 };

@@ -25,6 +25,9 @@ enum class EItemState : uint8
 };
 
 
+
+
+
 UCLASS()
 class HOSPITALPROJECT_API AItem : public AActor
 {
@@ -40,6 +43,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+
+
 //Called when overlapping AreaSphere
 UFUNCTION()
 	void OnSphereOveral(
@@ -49,6 +54,7 @@ UFUNCTION()
 		int32 OtherBodyIndex,
 		bool bFromSweep, 
 		const FHitResult& SweepResult);
+
 
 //Called when EndOverlaping AreaSphere
 UFUNCTION()
@@ -60,7 +66,7 @@ UFUNCTION()
 
 
 //Set properties of the Item's componentes based on State
-	void SetItemProperties(EItemState State);
+	virtual void SetItemProperties(EItemState State);
 
 
 
@@ -76,8 +82,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* ItemMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* Silencer;
+	
 	
 	//Line trace collides with box to show HUD widgets
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
@@ -110,9 +115,37 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	UTexture2D* BulletsItemTexture;
 
+	//Background for this item in the inventory
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UTexture2D* IconBackground;
+
+	//IconItem for this item in the inventory
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UTexture2D* IconItem;
+
+
+	//AmmoIcon for this item in the inventory
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UTexture2D* AmmoIcon;
+
+
 	//State of the item
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	EItemState ItemState;
+
+	//Sound played when item is picked up
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class USoundCue* PickUpSound;
+
+	virtual void EnableCustomDepth();
+	virtual void DisableCustomDepth();
+	virtual void InitializeCustomDepth();
+	
+	//Slot in the inventory Array
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	int32 SlotIndex;
+
+	
 
 
 public:
@@ -144,15 +177,59 @@ public:
 
 	void SetItemState(EItemState State);
 
-
 	FORCEINLINE USkeletalMeshComponent* GetItemMesh()
 	{
 		return ItemMesh;
 	}
 
-	FORCEINLINE UStaticMeshComponent* GetSilencerMesh()
+	FORCEINLINE USoundCue* GetPickedUpSound()
 	{
-		return Silencer;
+		return PickUpSound;
 	}
+
+	FORCEINLINE void SetPickedUpSound(USoundCue* newPickedUpSound)
+	{
+		PickUpSound = PickUpSound;
+	}
+
+
+	FORCEINLINE int32 GetItemCount()
+	{
+		return IntCount;
+	}
+
+	void DisableCustomDepthWrapper()
+	{
+		DisableCustomDepth();
+
+	}
+
+	void EnableCustomDepthWrapper()
+	{
+		EnableCustomDepth();
+
+	}
+
+	FORCEINLINE int32 GetSlotIndex()
+	{
+		return SlotIndex;
+	}
+
+	FORCEINLINE void SetSlotIndex(int index)
+	{
+		SlotIndex = index;
+	}
+	
+	FORCEINLINE void SetInventoryItem(UTexture2D* newInventoryItem)
+	{
+		IconItem = newInventoryItem;
+	}
+
+	FORCEINLINE void SetAmmoIcon(UTexture2D* newAmmoIcon)
+	{
+		AmmoIcon = newAmmoIcon;
+	}
+
+
 
 };

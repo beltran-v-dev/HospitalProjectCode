@@ -6,6 +6,8 @@
 #include "Components/WidgetComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/PostProcessComponent.h"
 #include "SurvivalCharacter.h"
 
 
@@ -17,21 +19,20 @@
 // Sets default values
 AItem::AItem()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ItemMesh"));
 	SetRootComponent(ItemMesh);
 
-	Silencer = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Silencer"));
-	Silencer->SetupAttachment(ItemMesh);
 	
+
 
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	CollisionBox->SetupAttachment(ItemMesh);
 	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(
-		ECollisionChannel::ECC_Visibility, 
+		ECollisionChannel::ECC_Visibility,
 		ECollisionResponse::ECR_Block);
 
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickipWidget"));
@@ -52,19 +53,24 @@ AItem::AItem()
 	BulletsItemTexture = nullptr;
 
 	ItemState = EItemState::EIS_Pickup;
+
 	
+	SlotIndex = -1;
+
+	
+
 }
 
 // Called when the game starts or when spawned
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	//Hide pickup widget
 	PickupWidget->SetVisibility(false);
 
 	InformationWidget->SetVisibility(false);
-	
+
 	//Setup overlap for AreaSphere
 	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOveral);
 	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
@@ -72,7 +78,16 @@ void AItem::BeginPlay()
 	//Set item properties based on ItemState
 	SetItemProperties(ItemState);
 
+
+	//Set custom depth to disable
+	InitializeCustomDepth();
+
+	
+
 }
+
+
+
 
 void AItem::OnSphereOveral(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -85,8 +100,9 @@ void AItem::OnSphereOveral(UPrimitiveComponent* OverlapComponent, AActor* OtherA
 		if (SurvivalCharacter)
 		{
 			SurvivalCharacter->IncrementOverlappedItemCount(1);
+			SurvivalCharacter->UnhighlightInventorySlot();
 		}
-		
+
 	}
 
 }
@@ -114,68 +130,84 @@ void AItem::SetItemProperties(EItemState State)
 	{
 	case EItemState::EIS_Pickup:
 
-		//Set mesh properties
+		// Set mesh properties
 		ItemMesh->SetSimulatePhysics(false);
 		ItemMesh->SetEnableGravity(false);
 		ItemMesh->SetVisibility(true);
 		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		//Set area sphere properties
+		// Set AreaSphere properties
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-		//Set CollisionBox properties
+		// Set CollisionBox properties
 		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+		CollisionBox->SetCollisionResponseToChannel(
+			ECollisionChannel::ECC_Visibility,
+			ECollisionResponse::ECR_Block);
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 		break;
 
 	case EItemState::EIS_EquipInterping:
 
 		PickupWidget->SetVisibility(false);
-		//SetVisiblue to true the new widget
-		//Set mesh properties
+
+		// Set mesh properties
 		ItemMesh->SetSimulatePhysics(false);
 		ItemMesh->SetEnableGravity(false);
 		ItemMesh->SetVisibility(true);
 		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		//Set AreaSphere properties
+		// Set AreaSphere properties
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		//Set collisionBox properties
+		// Set CollisionBox properties
 		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		break;
 
 	case EItemState::EIS_PickedUp:
-		break;
-	case EItemState::EIS_Equipped:
 
-	//	PickupWidget->SetVisibility(false);
+		PickupWidget->SetVisibility(false);
 
-		//Set mesh properties
-		ItemMesh->SetSimulatePhysics(false);	
+		// Set mesh properties
+		ItemMesh->SetSimulatePhysics(false);
 		ItemMesh->SetEnableGravity(false);
-		ItemMesh->SetVisibility(true);
+		ItemMesh->SetVisibility(false);
 		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		//Set are sphere properties
+		// Set AreaSphere properties
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		AreaSphere->SetActive(false);
 
-
-		//Set CollisionBox properties
+		// Set CollisionBox properties
 		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		CollisionBox->SetActive(false);
 
+		break;
+
+	case EItemState::EIS_Equipped:
+		// Set mesh properties
+
+		ItemMesh->SetSimulatePhysics(false);
+		ItemMesh->SetEnableGravity(false);
+		ItemMesh->SetVisibility(true);
+		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
+
+		// Set AreaSphere properties
+		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// Set CollisionBox properties
+		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 
 	case EItemState::EIS_MAX:
@@ -194,6 +226,32 @@ void AItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
+void AItem::EnableCustomDepth()
+{
+	ItemMesh->SetRenderCustomDepth(true);
+
+}
+
+void AItem::DisableCustomDepth()
+{
+	ItemMesh->SetRenderCustomDepth(false);
+
+}
+
+void AItem::InitializeCustomDepth()
+{
+
+	EnableCustomDepth();
+}
+
+
+
+
+
+
+
+
 
 void AItem::SetItemState(EItemState State)
 {
