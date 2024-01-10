@@ -17,6 +17,7 @@ enum class EComabtState : uint8
 	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	ECS_FireTimerInProgress UMETA(DisplayName = "FireTimerInProgress"),
 	ECS_Reloading UMETA(DisplayName = "Reloading"),
+	ECS_Stunned UMETA(DisplayName = "Stunned"),
 
 
 	ECS_MAX UMETA(DisplayName = "ECS_Max")
@@ -39,6 +40,13 @@ class HOSPITALPROJECT_API ASurvivalCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ASurvivalCharacter();
+
+	//Take combat damage
+	virtual float TakeDamage(
+		float DamageAmount,
+		struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator,
+		AActor* DamageCauser) override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -154,8 +162,26 @@ protected:
 
 	void HighlightInventorySlot();
 
-	
+	UFUNCTION(BlueprintCallable)
+	void EndStun();
 
+	void DirtyClothes();
+
+	UFUNCTION(BlueprintCallable)
+	void TimeScreenBlood(float ScreenBloodTime);
+
+	void ResetHasBeenAttacked();
+
+	void Die();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishDeath();
+
+	UFUNCTION(BlueprintCallable)
+	void StopMovements();
+
+	UFUNCTION(BlueprintCallable)
+	EPhysicalSurface GetSurfaceType();
 
 
 
@@ -181,8 +207,9 @@ public:
 	void SetCameraFOV(float DeltaTime);
 
 
+	void SetDeathWidget();
 
-
+	void ChangeLevelAfterDying();
 
 
 
@@ -201,13 +228,20 @@ private:
 
 	//Randomized gunshot sound cue
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
-		class USoundCue* FireSound;
+	class USoundCue* FireSound;
+
+	//Aiming sound
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
+	USoundCue* AimingSound;
 
 	//Flash spawned at barrelSocket
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
-		class UParticleSystem* MuzzleFlash;
+	class UParticleSystem* MuzzleFlash;
 
 	class USkeletalMeshComponent* MainSkeletalMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lighting", meta = (AllowPrivateAccess = "true"))
+	class USpotLightComponent* FlashLight;
 
 	bool bIsShoot;
 
@@ -416,6 +450,64 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 	int32 HighlightedSlot;
 
+	//Character health
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float Health;
+
+	//Character max health
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaxHealth;
+
+	//Sound made when CHaracter gets hit by a melee attack
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* MelleImpactSound;
+
+	////NiagaraSystem to spawn blood particles when the character is hit
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* NiagaraSystemBloodParticles;
+
+	//Hit react animMontage for when character is stunned
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HitReactMontage;
+
+	//Chance of being stunned when hit by an enemy
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float StunChance;
+
+	//camera shake used when the player is attacked
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class UMatineeCameraShake> CameraShake;
+
+	UMaterialInterface* Material;
+	UMaterialInterface* Material2;
+
+	UMaterialInstanceDynamic* DynamicMaterial;
+	UMaterialInstanceDynamic* TrousersMaterials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float AmountOfBlood;
+
+	float CurrentDirtAmount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bHasBeenAttacked;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float timeScreenBloodActive;
+
+	//Death react animMontage for when character is dead
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DeathtReactMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsDead;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widget, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> DeathWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Timer, meta = (AllowPrivateAccess = "true"))
+	float timeAfterDying;
+
 
 public:
 
@@ -471,8 +563,23 @@ public:
 		return EqquipedWeapon;
 	}
 
-	
+	FORCEINLINE USoundCue* GetMelleImpactSound()
+	{
+		return MelleImpactSound;
+	}
 
 	void UnhighlightInventorySlot();
+
+	FORCEINLINE UNiagaraSystem* GetNiagaraSystemBloodParticles()
+	{
+		return NiagaraSystemBloodParticles;
+	}
+
+	void Stun();
+
+	FORCEINLINE float GetStunChance()
+	{
+		return StunChance;
+	}
 
 };

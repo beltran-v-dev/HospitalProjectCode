@@ -13,6 +13,10 @@ class HOSPITALPROJECT_API AExplosive : public AActor, public IBulletHitInterface
 {
 	GENERATED_BODY()
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 private:
 
 	//Explosion when hit by a bullet
@@ -23,19 +27,26 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
 	class USoundCue* ImpactSound;
 	
-public:	
-	// Sets default values for this actor's properties
-	AExplosive();
+	//Used to determine what Actors overlap during a explosion
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
+	class USphereComponent* OverlapSphere;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	//Mesh for the explosive
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
+	class UStaticMeshComponent* ExplosiveMesh;
+
+	//Damage amount for explosive
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
+	float DamageAmountExplosive;
+
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void BulletHit_Implementation(FHitResult HitResult) override;
+	virtual void BulletHit_Implementation(FHitResult HitResult, AActor* Shooter, AController* ShooterController) override;
+
+	AExplosive();
 
 
 };

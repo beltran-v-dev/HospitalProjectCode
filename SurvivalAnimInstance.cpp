@@ -25,12 +25,10 @@ USurvivalAnimInstance::USurvivalAnimInstance()
 
 }
 
+
+// Updates animation properties based on the character's state and movement.
 void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 {
-
-
-
-
 
 	//Check that SurvivalCharacter is not null
 	if (!SurvivalCharacter)
@@ -39,7 +37,6 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 
 	}
 	//if SurvivalCharacter is not null dive into the folloing conditional  
-
 	if (SurvivalCharacter)
 	{
 		//Get the spped of the character from velocity
@@ -60,14 +57,11 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 		}
 
 		//Gives us the AimRotator where our character is aiming 
-
-	//FRotator AimRotator = SurvivalCharacter->GetBaseAimRotation();
 		FRotator AimRotator = SurvivalCharacter->GetBaseAimRotation();
-		//FString RotationMessage = FString::Printf(TEXT("Base aim rotation: %f"), AimRotator.Yaw);
-
+		
 		//this gives us the vector from character velocity
 		FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(SurvivalCharacter->GetVelocity());
-		//FString MovementRotationMessage = FString::Printf(TEXT("Movement Rotation: %f"), MovementRotation.Yaw);
+		
 
 		//Difference between MovementRotation and AimRotator to set correctly direction variable in order
 		//to set belndSpace
@@ -78,21 +72,12 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 			DirectionBeforeStopping = Direction;
 		}
 		
-		/*if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White, MovementRotationMessage);
-		}*/
 
 
 
 		bIsAiming = SurvivalCharacter->GetAimingBool();		
-		
-
-
 		bHasAWeapon = SurvivalCharacter->GetbHasAWeapon();
-
 		bIsJogging = SurvivalCharacter->GetbIsJoging();
-	
 		bIsCrouching = SurvivalCharacter->GetCrouching();
 
 		if (SurvivalCharacter->GetEqquipedWeapon())
@@ -110,12 +95,16 @@ void USurvivalAnimInstance::UpdateAnimationProperties(float deltaTime)
 
 }
 
+
+// Initializes the animation instance by getting the owning SurvivalCharacter.
 void USurvivalAnimInstance::NativeInitializeAnimation()
 {
 	//Inialising SurvivalCharacter by TryGetPawnOwner
 	SurvivalCharacter = Cast<ASurvivalCharacter>(TryGetPawnOwner());
 }
 
+
+// Manages turning in place for the character.
 void USurvivalAnimInstance::TurnInPlace()
 {
 	if (SurvivalCharacter == nullptr) return;
@@ -124,7 +113,7 @@ void USurvivalAnimInstance::TurnInPlace()
 
 	if (speed > 0)
 	{
-		//DOn't want to tun in place, Character is moving
+		// Don't want to turn in place if the character is moving
 		RootYawOffset = 0.0f;
 		TIPCharacterYaw = SurvivalCharacter->GetActorRotation().Yaw;
 		TIPCharacterYawLastFrame = TIPCharacterYaw;

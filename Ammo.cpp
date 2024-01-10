@@ -7,20 +7,17 @@
 #include "Components/SphereComponent.h"
 
 
-
+// Ammo constructor
 AAmmo::AAmmo()
 {
 	//Construct the AmmoMesh component and set it as the root
-	AmmoMesh = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>(TEXT("AmmoMesh"));
+	AmmoMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AmmoMesh"));
 	SetRootComponent(AmmoMesh);
 
+	// Attach other components to the root
 	GetCollisionBox()->SetupAttachment(GetRootComponent());
 	GetPickupWidget()->SetupAttachment(GetRootComponent());
 	GetAreaSphere()->SetupAttachment(GetRootComponent());
-
-
-
-	
 
 }
 
@@ -34,13 +31,17 @@ void AAmmo::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Initialize custom depth settings
 	InitializeCustomDepth();
 
 }
 
+// Set properties based on the state of the item
 void AAmmo::SetItemProperties(EItemState State)
 {
 	Super::SetItemProperties(State);
+
+	if (!AmmoMesh) return;
 
 	switch (State)
 	{
@@ -57,7 +58,7 @@ void AAmmo::SetItemProperties(EItemState State)
 
 	case EItemState::EIS_EquipInterping:
 
-	
+
 		GetPickupWidget()->SetVisibility(false);
 		// Set mesh properties
 		AmmoMesh->SetSimulatePhysics(false);
@@ -81,7 +82,7 @@ void AAmmo::SetItemProperties(EItemState State)
 		AmmoMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		AmmoMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		
+
 		break;
 
 	case EItemState::EIS_MAX:
@@ -92,6 +93,7 @@ void AAmmo::SetItemProperties(EItemState State)
 
 }
 
+// Enable custom depth rendering for the AmmoMesh
 void AAmmo::EnableCustomDepth()
 {
 
@@ -99,6 +101,7 @@ void AAmmo::EnableCustomDepth()
 
 }
 
+// Disable custom depth rendering for the AmmoMesh
 void AAmmo::DisableCustomDepth()
 {
 
@@ -106,6 +109,7 @@ void AAmmo::DisableCustomDepth()
 
 }
 
+// Initialize custom depth settings for the AmmoMesh
 void AAmmo::InitializeCustomDepth()
 {
 

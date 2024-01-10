@@ -43,6 +43,8 @@ private:
 	//Mesh for the ammo pickup
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ammo", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* AmmoMesh;
+
+	
 	
 	//Ammo type for the amo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo", meta = (AllowPrivateAccess = "true"))
